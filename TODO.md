@@ -1,14 +1,14 @@
 # DataLens — TODO
 
 ## Phase 1: Setup + Data Loading
-- [ ] Create Streamlit app
-- [ ] Add CSV upload
-- [ ] Display dataframe (head)
-- [ ] Show shape (rows, columns)
+- [✅] Create Streamlit app
+- [✅] Add CSV upload
+- [✅] Display dataframe (head)
+- [✅] Show shape (rows, columns)
 
-- [ ] Show column names
-- [ ] Show data types
-- [ ] Show missing values
+- [✅] Show column names
+- [✅] Show data types
+- [✅] Show missing values
 
 ---
 
