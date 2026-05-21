@@ -13,14 +13,10 @@
 ---
 
 ## Phase 2: Basic EDA
-- [ ] Summary statistics (describe)
-- [ ] Histograms for numeric columns
-- [ ] Count plots for categorical columns
-- [ ] Correlation heatmap
-
-- [ ] Column selector for visualizations
-- [ ] Basic dataset insights section
-
+- [✅] Summary statistics (describe)
+- [✅] Column selector for visualizations
+- [✅] Univariate Analysis
+- [✅] Bivariate Analysis
 ---
 
 ## Phase 3: ML Core
