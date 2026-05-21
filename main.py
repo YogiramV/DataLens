@@ -118,7 +118,7 @@ if file is not None:
             if selected_chart == 'Scatter Plot':
                 st.subheader('Scatter Plot')
                 fig = px.scatter(df, x=selected_col1,
-                                 y=selected_col2, trendline='ols')
+                                 y=selected_col2)
                 st.plotly_chart(fig, width='stretch')
             elif selected_chart == 'Line Plot':
                 st.subheader('Line Plot')
