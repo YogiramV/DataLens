@@ -2,12 +2,21 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
+
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
+
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+
+from sklearn.metrics import f1_score, mean_absolute_error, mean_squared_error, r2_score, accuracy_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 
 st.set_page_config(layout="wide")
@@ -123,7 +132,7 @@ if file is not None:
         if selected_col1 in numeric_cols and selected_col2 in numeric_cols:
             # Numerical Vs Numerical
             selected_chart = st.selectbox(
-                'Select chart type', numvnum_chart, index=None, placeholder="Select required chart...",)
+                'Select chart type', numvnum_chart, index=None, placeholder="Select required chart...")
             if selected_chart == 'Scatter Plot':
                 st.subheader('Scatter Plot')
                 fig = px.scatter(df, x=selected_col1,
@@ -186,9 +195,12 @@ if file is not None:
     # =========================================
 
     with ml:
-        target_col = st.selectbox("Select the target column", df.columns)
+        df = df.dropna()
+        target_col = st.selectbox(
+            "Select the target column", df.columns, index=None, placeholder="Select required column...")
 
-        if pd.api.types.is_any_real_numeric_dtype(df[target_col]):
+        if target_col and pd.api.types.is_any_real_numeric_dtype(df[target_col]):
+            # Regression
             st.subheader('Regression')
             X = df[numeric_cols].drop(target_col, axis=1)
             y = df[target_col]
@@ -237,17 +249,120 @@ if file is not None:
                 })
 
             df_results = pd.DataFrame(results)
-            st.dataframe(df_results.style.highlight_min(
-                subset=['MAE', 'MSE', 'RMSE'], color='green').highlight_max(subset=['R2 Score'], color='green'), hide_index=True)
+            st.dataframe(df_results.style
+                         .highlight_min(subset=['MAE', 'MSE', 'RMSE'], color='green')
+                         .highlight_max(subset=['R2 Score'], color='green'), hide_index=True)
 
-        elif not (pd.api.types.is_datetime64_any_dtype(df[target_col])):
+        elif target_col and not (pd.api.types.is_datetime64_any_dtype(df[target_col])):
+            # Classification
+            st.subheader('Classification')
             X = df.drop(target_col, axis=1)
             y = df[target_col]
 
-            X_train, X_test, y_train, y_test = train_test_split(X, y)
-            # Tree regression
-            tree_reg = DecisionTreeRegressor()
-            tree_reg.fit(X_train, y_train)
-            col0, col1 = st.columns(2)
-            col0.write(y_test)
-            col1.write(tree_reg.predict(X_test))
+            # Encode columns
+            label_encoder = LabelEncoder()
+            y = label_encoder.fit_transform(y)
+
+            # Column segregation
+            num_cols = X.select_dtypes(include='number').columns
+            cat_cols = X.select_dtypes(['object', 'category']).columns
+
+            # Transformers
+            categorical_transformer = Pipeline(steps=[
+                ('imputer', SimpleImputer(strategy='most_frequent')),
+                ('onehot', OneHotEncoder(handle_unknown='ignore'))
+            ])
+            numeric_transformer = Pipeline(steps=[
+                ('imputer', SimpleImputer(strategy='mean')),
+                ('scaler', StandardScaler())
+            ])
+
+            # Preprocessor
+            preprocessor = ColumnTransformer(
+                transformers=[
+                    ('num', numeric_transformer, num_cols),
+                    ('cat', categorical_transformer, cat_cols)
+                ]
+            )
+
+            # Split dataset
+            X_train, X_test, y_train, y_test = train_test_split(
+                X,
+                y,
+                test_size=0.2,
+                random_state=42
+            )
+
+            # Decision Tree classifier
+            tree_cl = Pipeline(steps=[
+                ('preprocessor', preprocessor),
+                ('classifier', DecisionTreeClassifier())
+            ])
+            tree_cl.fit(X_train, y_train)
+            tree_pred = tree_cl.predict(X_test)
+
+            # Random Forest classifier
+            rf_cl = Pipeline(steps=[
+                ('preprocessor', preprocessor),
+                ('classifier', RandomForestClassifier(n_estimators=100,
+                                                      random_state=42))
+            ])
+            rf_cl.fit(X_train, y_train)
+            rf_pred = rf_cl.predict(X_test)
+
+            pred = pd.DataFrame({
+                'Actual': y_test,
+                'Predicted(Decison Tree)': tree_pred,
+                'Predicted(Random Forest)': rf_pred
+            })
+            pred['Actual'] = label_encoder.inverse_transform(pred['Actual'])
+            pred['Predicted(Decision Tree)'] = label_encoder.inverse_transform(
+                pred['Predicted(Decision Tree)'])
+            pred['Predicted(Random Forest)'] = label_encoder.inverse_transform(
+                pred['Predicted(Random Forest)'])
+            st.dataframe(pred)
+
+            # Metrics
+
+            models = {
+                'Decision Tree': tree_pred,
+                'Random Forest': rf_pred
+            }
+
+            results = []
+
+            for name, y_pred in models.items():
+
+                # Metrics
+                accuracy = accuracy_score(y_test, y_pred)
+                precision = precision_score(
+                    y_test,
+                    y_pred,
+                    average='weighted'
+                )
+
+                recall = recall_score(
+                    y_test,
+                    y_pred,
+                    average='weighted'
+                )
+
+                f1 = f1_score(
+                    y_test,
+                    y_pred,
+                    average='weighted'
+                )
+
+                # Store results
+                results.append({
+                    'Model': name,
+                    'Accuracy': round(accuracy, 3),
+                    'Precision': round(precision, 3),
+                    'Recall': round(recall, 3),
+                    'F1 Score': round(f1, 3)
+                })
+            results_df = pd.DataFrame(results)
+
+            st.subheader("Model Comparison")
+
+            st.dataframe(results_df)

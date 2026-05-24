@@ -24,12 +24,12 @@
 - [✅] Detect problem type (classification / regression)
 - [✅] Train-test split
 
-- [ ] Train baseline models:
+- [✅] Train baseline models:
 - [✅] Linear Regression
 - [✅] Decision Tree Regression
 - [✅] Random Forest Regression
-- [ ] Decision Tree Classifier
-- [ ] Random Forest Classifier
+- [✅] Decision Tree Classifier
+- [✅] Random Forest Classifier
 
 - [✅] Show sample predictions
 - [✅] Show metrics (accuracy / RMSE)
