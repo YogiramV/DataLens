@@ -20,26 +20,25 @@
 ---
 
 ## Phase 3: ML Core
-- [ ] Select target column
-- [ ] Detect problem type (classification / regression)
-- [ ] Train-test split
+- [✅] Select target column
+- [✅] Detect problem type (classification / regression)
+- [✅] Train-test split
 
 - [ ] Train baseline models:
-  - Linear/Logistic Regression
-  - Random Forest
+- [✅] Linear Regression
+- [✅] Decision Tree Regression
+- [✅] Random Forest Regression
+- [ ] Decision Tree Classifier
+- [ ] Random Forest Classifier
 
-- [ ] Show metrics (accuracy / RMSE)
-- [ ] Model comparison table
-
-- [ ] Show sample predictions
+- [✅] Show sample predictions
+- [✅] Show metrics (accuracy / RMSE)
+- [✅] Model comparison table
 
 ---
 
-## Phase 4: Structure + UX
-- [ ] Organize code into modules (eda, ml, utils)
-- [ ] Clean UI layout (sidebar + sections)
-- [ ] Add loading states
-
+## Phase 4: ML Advanced
+- [ ] Add model parameter controls
 - [ ] Feature importance (tree models)
 - [ ] Basic insights text output
 

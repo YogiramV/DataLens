@@ -2,6 +2,13 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
 
 st.set_page_config(layout="wide")
 
@@ -14,7 +21,7 @@ file = st.sidebar.file_uploader(
 )
 
 # Tabs
-info, eda = st.tabs(['Info', 'EDA'])
+info, eda, ml = st.tabs(['Info', 'EDA', 'ML'])
 
 if file is not None:
 
@@ -28,7 +35,7 @@ if file is not None:
 
         st.subheader("Uploaded CSV Data", divider=True)
 
-        st.dataframe(df.head())
+        st.dataframe(df)
 
         # Dataset Info
         st.subheader('Dataframe Information', divider=True)
@@ -39,14 +46,16 @@ if file is not None:
         col2.metric("Columns", df.shape[1])
         col3.metric("Missing Values", df.isna().sum().sum())
 
-        st.subheader('Columns')
-        st.write(df.columns)
+        col4, col5, col6 = st.columns(3)
 
-        st.subheader('Datatypes')
-        st.write(df.dtypes)
+        col4.subheader('Columns')
+        col4.write(df.columns)
 
-        st.subheader('Missing Values')
-        st.write(df.isna().sum())
+        col5.subheader('Datatypes')
+        col5.write(df.dtypes)
+
+        col6.subheader('Missing Values')
+        col6.write(df.isna().sum())
 
         st.subheader('Correlation Heatmap(Only Numerical)')
         corr = df.corr(numeric_only=True)
@@ -171,3 +180,74 @@ if file is not None:
                 fig = px.imshow(ct, text_auto=True,
                                 color_continuous_scale='Blues')
                 st.plotly_chart(fig, width='stretch')
+
+    # =========================================
+    # ML TAB
+    # =========================================
+
+    with ml:
+        target_col = st.selectbox("Select the target column", df.columns)
+
+        if pd.api.types.is_any_real_numeric_dtype(df[target_col]):
+            st.subheader('Regression')
+            X = df[numeric_cols].drop(target_col, axis=1)
+            y = df[target_col]
+
+            X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+            # Linear regression
+            lin_reg = LinearRegression()
+            lin_reg.fit(X_train, y_train)
+
+            # Decision Tree regression
+            tree_reg = DecisionTreeRegressor()
+            tree_reg.fit(X_train, y_train)
+
+            # Random Forest regression
+            rf_reg = RandomForestRegressor()
+            rf_reg.fit(X_train, y_train)
+
+            # Display predictions
+            pred = pd.DataFrame({
+                'Actual': y_test,
+                'Predicted(Linear)': lin_reg.predict(X_test),
+                'Predicted(Decision Tree)': tree_reg.predict(X_test),
+                'Predicted(Random Forest)': rf_reg.predict(X_test)
+            })
+            st.dataframe(pred, hide_index=True)
+
+            # Metrics
+            models = {
+                "Linear Regression": lin_reg,
+                "Decision Tree": tree_reg,
+                "Random Forest": rf_reg
+            }
+
+            results = []
+
+            for name, model in models.items():
+                y_pred = model.predict(X_test)
+
+                results.append({
+                    "Model": name,
+                    "MAE": mean_absolute_error(y_test, y_pred),
+                    "MSE": mean_squared_error(y_test, y_pred),
+                    "RMSE": np.sqrt(mean_squared_error(y_test, y_pred)),
+                    "R2 Score": r2_score(y_test, y_pred)
+                })
+
+            df_results = pd.DataFrame(results)
+            st.dataframe(df_results.style.highlight_min(
+                subset=['MAE', 'MSE', 'RMSE'], color='green').highlight_max(subset=['R2 Score'], color='green'), hide_index=True)
+
+        elif not (pd.api.types.is_datetime64_any_dtype(df[target_col])):
+            X = df.drop(target_col, axis=1)
+            y = df[target_col]
+
+            X_train, X_test, y_train, y_test = train_test_split(X, y)
+            # Tree regression
+            tree_reg = DecisionTreeRegressor()
+            tree_reg.fit(X_train, y_train)
+            col0, col1 = st.columns(2)
+            col0.write(y_test)
+            col1.write(tree_reg.predict(X_test))
