@@ -312,7 +312,7 @@ if file is not None:
 
             pred = pd.DataFrame({
                 'Actual': y_test,
-                'Predicted(Decison Tree)': tree_pred,
+                'Predicted(Decision Tree)': tree_pred,
                 'Predicted(Random Forest)': rf_pred
             })
             pred['Actual'] = label_encoder.inverse_transform(pred['Actual'])
