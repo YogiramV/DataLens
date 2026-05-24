@@ -365,4 +365,5 @@ if file is not None:
 
             st.subheader("Model Comparison")
 
-            st.dataframe(results_df)
+            st.dataframe(results_df.style.highlight_max(
+                subset=['Accuracy', 'Precision', 'Recall', 'F1 Score'], color='green'), hide_index=True)
