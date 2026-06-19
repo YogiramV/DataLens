@@ -38,7 +38,7 @@
 ---
 
 ## Phase 4: ML Advanced
-- [ ] Add model parameter controls
+- [✅] Add model parameter controls
 - [ ] Feature importance (tree models)
 - [ ] Basic insights text output
 
