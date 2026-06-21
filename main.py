@@ -205,7 +205,8 @@ if file is not None:
             X = df[numeric_cols].drop(target_col, axis=1)
             y = df[target_col]
 
-            X_train, X_test, y_train, y_test = train_test_split(X, y)
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, random_state=42)
 
             # Linear regression
             lin_reg = LinearRegression()
@@ -371,60 +372,92 @@ if file is not None:
     # =========================================
     # CUSTOM TAB
     # =========================================
-    modeldict = {'Linear regressor': [LinearRegression(
-    ), ['tol', 'n_jobs']], 'Random forest regressor': [RandomForestRegressor(), ['n_estimators', 'max_depth', 'min_samples_leaf']]}
+    model_dict = {'Linear regressor': [LinearRegression, ['tol', 'n_jobs']], 'Random forest regressor': [
+        RandomForestRegressor, ['n_estimators', 'max_depth', 'max_leaf_nodes']]}
 
     def get_model(model_name):
-        return modeldict[model_name][0], modeldict[model_name][1]
+        model_class, params = model_dict[model_name]
+        return model_class(), params
+
+    def model_cust(selected_model, col_name=None):
+        if col_name == None:
+            col_name = 'single'
+
+        st.subheader('Parameter tuning', divider='blue')
+        model, model_params = get_model(selected_model)
+        st.write("Modifiable paramaters : ",
+                 model_params)
+        params = {}
+
+        for i in model_params:
+            params[i] = eval(st.text_input(i, value=0, key=col_name+str(i)))
+
+        st.subheader('Model training', divider='green')
+        y_selected = st.selectbox(
+            'Choose data to predict', numeric_cols, index=None, placeholder="Select column", key=col_name+'y')
+        x_selected = st.multiselect(
+            'Choose data to fit', [
+                x for x in numeric_cols if x != y_selected], placeholder="Select column", key=col_name+'x')
+        st.write(model.set_params(**params))
+
+        if x_selected and y_selected:
+            X = df[x_selected]
+            y = df[y_selected]
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, random_state=42)
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            pred = pd.DataFrame({
+                'Actual': y_test,
+                'Predicted': y_pred,
+            })
+            st.write("Prediction for ", selected_model,
+                     "with params : ", model.get_params())
+
+            st.subheader('Prediction results')
+            st.dataframe(pred, hide_index=True)
+
+            metrics = {
+                "MAE": mean_absolute_error(y_test, y_pred),
+                "MSE": mean_squared_error(y_test, y_pred),
+                "RMSE": np.sqrt(mean_squared_error(y_test, y_pred)),
+                "R² Score": r2_score(y_test, y_pred)
+            }
+
+            results_df = pd.DataFrame(
+                [{"Metric": metric, "Value": round(value, 4)}
+                    for metric, value in metrics.items()]
+            )
+
+            st.dataframe(results_df, use_container_width=True,
+                         hide_index=True)
 
     with cust:
-        st.subheader('Model Customization')
-        selected_model = st.selectbox(
-            'Select model for customization', modeldict.keys(), index=None, placeholder="Select required model...")
-        params = {}
-        if selected_model:
-            st.subheader('Parameter tuning', divider=True)
-            model, model_params = get_model(selected_model)
-            st.write("Modifiable paramaters : ",
-                     model_params)
-            for i in model_params:
-                params[i] = eval(st.text_input(i, value=0))
+        comp = st.toggle('Compare models?')
+        if not (comp):
+            st.subheader('Model Customization')
+            selected_model = st.selectbox(
+                'Select model for customization', model_dict.keys(), index=None, placeholder="Select required model...")
+            if selected_model:
+                model_cust(selected_model)
+        else:
 
-            st.subheader('Model training', divider=True)
-            x_selected = st.multiselect(
-                'Choose the data to fit', numeric_cols, placeholder='Select the columns')
-            y_selected = st.selectbox('Choose data to predict', [
-                x for x in numeric_cols if x not in x_selected], index=None, placeholder="Select column")
-            st.write(model.set_params(**params))
+            st.subheader('Compare models')
 
-            if x_selected and y_selected:
-                X = df[x_selected]
-                y = df[y_selected]
-                X_train, X_test, y_train, y_test = train_test_split(
-                    X, y)
-                model.fit(X_train, y_train)
-                y_pred = model.predict(X_test)
-                pred = pd.DataFrame({
-                    'Actual': y_test,
-                    'Predicted': y_pred,
-                })
-                st.write("Prediction for ", selected_model,
-                         "with params : ", model.get_params())
+            m1 = st.selectbox(
+                'Select model for customization', model_dict.keys(), index=None, placeholder="Select first model...")
+            m2 = st.selectbox(
+                'Select model for customization', model_dict.keys(), index=None, placeholder="Select second model...")
 
-                st.subheader('Prediction results')
-                st.dataframe(pred, hide_index=True)
+            if m1 and m2:
 
-                metrics = {
-                    "MAE": mean_absolute_error(y_test, y_pred),
-                    "MSE": mean_squared_error(y_test, y_pred),
-                    "RMSE": np.sqrt(mean_squared_error(y_test, y_pred)),
-                    "R² Score": r2_score(y_test, y_pred)
-                }
+                model1, model2 = st.columns(
+                    2, vertical_alignment='top', border=True)
 
-                results_df = pd.DataFrame(
-                    [{"Metric": metric, "Value": round(value, 4)}
-                     for metric, value in metrics.items()]
-                )
+                with model1:
+                    model1.subheader('Model 1 : '+m1)
+                    model_cust(m1, 'Left')
 
-                st.dataframe(results_df, use_container_width=True,
-                             hide_index=True)
+                with model2:
+                    model2.subheader('Model 2 : '+m2)
+                    model_cust(m2, 'Right')
