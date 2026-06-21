@@ -371,27 +371,32 @@ if file is not None:
     # =========================================
     # CUSTOM TAB
     # =========================================
+    modeldict = {'Linear regressor': [LinearRegression(
+    ), ['tol', 'n_jobs']], 'Random forest regressor': [RandomForestRegressor(), ['n_estimators', 'max_depth', 'min_samples_leaf']]}
+
+    def get_model(model_name):
+        return modeldict[model_name][0], modeldict[model_name][1]
+
     with cust:
         st.subheader('Model Customization')
-        models = {'Linear regression': ['tol', 'n_jobs']}
         selected_model = st.selectbox(
-            'Select model for customization', models.keys(), index=None, placeholder="Select required model...")
+            'Select model for customization', modeldict.keys(), index=None, placeholder="Select required model...")
         params = {}
-
-        # Linear regression customization
-        if selected_model == 'Linear regression':
-            st.write("Modifiable paramaters : ",
-                     models[selected_model])
-            for i in models[selected_model]:
-                params[i] = eval(st.text_input(i, value=0))
-            model = LinearRegression()
-
         if selected_model:
+            st.subheader('Parameter tuning', divider=True)
+            model, model_params = get_model(selected_model)
+            st.write("Modifiable paramaters : ",
+                     model_params)
+            for i in model_params:
+                params[i] = eval(st.text_input(i, value=0))
+
+            st.subheader('Model training', divider=True)
             x_selected = st.multiselect(
                 'Choose the data to fit', numeric_cols, placeholder='Select the columns')
             y_selected = st.selectbox('Choose data to predict', [
                 x for x in numeric_cols if x not in x_selected], index=None, placeholder="Select column")
             st.write(model.set_params(**params))
+
             if x_selected and y_selected:
                 X = df[x_selected]
                 y = df[y_selected]
@@ -409,16 +414,17 @@ if file is not None:
                 st.subheader('Prediction results')
                 st.dataframe(pred, hide_index=True)
 
-            metrics = {
-                "MAE": mean_absolute_error(y_test, y_pred),
-                "MSE": mean_squared_error(y_test, y_pred),
-                "RMSE": np.sqrt(mean_squared_error(y_test, y_pred)),
-                "R² Score": r2_score(y_test, y_pred)
-            }
+                metrics = {
+                    "MAE": mean_absolute_error(y_test, y_pred),
+                    "MSE": mean_squared_error(y_test, y_pred),
+                    "RMSE": np.sqrt(mean_squared_error(y_test, y_pred)),
+                    "R² Score": r2_score(y_test, y_pred)
+                }
 
-            results_df = pd.DataFrame(
-                [{"Metric": metric, "Value": round(value, 4)}
-                 for metric, value in metrics.items()]
-            )
+                results_df = pd.DataFrame(
+                    [{"Metric": metric, "Value": round(value, 4)}
+                     for metric, value in metrics.items()]
+                )
 
-            st.dataframe(results_df, use_container_width=True, hide_index=True)
+                st.dataframe(results_df, use_container_width=True,
+                             hide_index=True)
