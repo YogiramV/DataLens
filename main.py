@@ -385,6 +385,7 @@ if file is not None:
 
         st.subheader('Parameter tuning', divider='blue')
         model, model_params = get_model(selected_model)
+        st.write(id(model))
         st.write("Modifiable paramaters : ",
                  model_params)
         params = {}
@@ -403,8 +404,10 @@ if file is not None:
         if x_selected and y_selected:
             X = df[x_selected]
             y = df[y_selected]
+            train_size = st.slider(
+                'Select train split', 0.1, 0.9, 0.6, key=col_name+'slider')
             X_train, X_test, y_train, y_test = train_test_split(
-                X, y, random_state=42)
+                X, y, train_size=train_size, random_state=42)
             model.fit(X_train, y_train)
             y_pred = model.predict(X_test)
             pred = pd.DataFrame({
