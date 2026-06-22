@@ -375,6 +375,8 @@ if file is not None:
     model_dict = {'Linear regressor': [LinearRegression, ['tol', 'n_jobs']], 'Random forest regressor': [
         RandomForestRegressor, ['n_estimators', 'max_depth', 'max_leaf_nodes']], 'Decision tree regressor': [DecisionTreeRegressor, ['max_depth', 'max_leaf_nodes']]}
 
+    feat_imp = ['Random forest regressor']
+
     def get_model(model_name):
         model_class, params = model_dict[model_name]
         return model_class(), params
@@ -433,6 +435,14 @@ if file is not None:
 
             st.dataframe(results_df, use_container_width=True,
                          hide_index=True)
+
+            if selected_model in feat_imp:
+                st.subheader('Feature importances')
+                importances = model.feature_importances_
+                feat_importances = pd.Series(
+                    importances, X_train.columns).sort_values(ascending=False).reset_index()
+                feat_importances.columns = ['Feature', 'Importance']
+                st.dataframe(feat_importances, hide_index=True)
 
     with cust:
         comp = st.toggle('Compare models?')
