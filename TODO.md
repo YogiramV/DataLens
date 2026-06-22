@@ -44,7 +44,7 @@
 ---
 
 ## Phase 5: Final Version
-- [ ] Add sample datasets
+- [✅] Add sample datasets
 - [ ] Add feature to perform user controlled EDA in datasets
 - [ ] Export results (CSV)
 - [ ] Improve charts (plotly optional)
