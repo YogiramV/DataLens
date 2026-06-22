@@ -373,7 +373,7 @@ if file is not None:
     # CUSTOM TAB
     # =========================================
     model_dict = {'Linear regressor': [LinearRegression, ['tol', 'n_jobs']], 'Random forest regressor': [
-        RandomForestRegressor, ['n_estimators', 'max_depth', 'max_leaf_nodes']]}
+        RandomForestRegressor, ['n_estimators', 'max_depth', 'max_leaf_nodes']], 'Decision tree regressor': [DecisionTreeRegressor, ['max_depth', 'max_leaf_nodes']]}
 
     def get_model(model_name):
         model_class, params = model_dict[model_name]
@@ -385,7 +385,6 @@ if file is not None:
 
         st.subheader('Parameter tuning', divider='blue')
         model, model_params = get_model(selected_model)
-        st.write(id(model))
         st.write("Modifiable paramaters : ",
                  model_params)
         params = {}
