@@ -39,17 +39,16 @@
 
 ## Phase 4: ML Advanced
 - [✅] Add model parameter controls
-- [ ] Feature importance (tree models)
-- [ ] Basic insights text output
+- [✅] Feature importance (tree models)
 
 ---
 
 ## Phase 5: Final Version
 - [ ] Add sample datasets
+- [ ] Add feature to perform user controlled EDA in datasets
 - [ ] Export results (CSV)
 - [ ] Improve charts (plotly optional)
 - [ ] Final UI polish
 
 - [ ] Write README
-- [ ] Add screenshots
 - [ ] Deploy app
