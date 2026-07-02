@@ -19,6 +19,9 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import f1_score, mean_absolute_error, mean_squared_error, r2_score, accuracy_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 
+import io
+from contextlib import redirect_stdout
+
 st.set_page_config(layout="wide")
 
 st.title('DATALENS : Tool for analyzing datasets')
@@ -35,6 +38,7 @@ info, eda, ml, cust = st.tabs(['Info', 'EDA', 'ML', 'Custom'])
 if file is not None:
 
     df = pd.read_csv(file)
+    st.session_state.df = df
 
     # =========================================
     # INFO TAB
@@ -445,9 +449,12 @@ if file is not None:
                 st.dataframe(feat_importances, hide_index=True)
 
     with cust:
+
+        # Model customization
+
+        st.subheader('Model Customization')
         comp = st.toggle('Compare models?')
         if not (comp):
-            st.subheader('Model Customization')
             selected_model = st.selectbox(
                 'Select model for customization', model_dict.keys(), index=None, placeholder="Select required model...")
             if selected_model:
@@ -473,3 +480,31 @@ if file is not None:
                 with model2:
                     model2.subheader('Model 2 : '+m2)
                     model_cust(m2, 'Right')
+
+        # EDA customization
+
+        st.subheader('Custom EDA', divider=True)
+        mode = st.toggle('Type commands manually?')
+        if mode:
+            cmd = st.text_input(
+                'Enter your command here..(Use df for dataset reference)')
+
+        namespace = {
+            "df": st.session_state.df,
+            "pd": pd,
+            "np": np,
+        }
+        if st.button("Execute"):
+            try:
+                # Try as an expression first
+                result = eval(cmd, {"__builtins__": {}}, namespace)
+                if result is not None:
+                    st.write(result)
+            except SyntaxError:
+                # If it's a statement, execute it
+                exec(cmd, {"__builtins__": {}}, namespace)
+                st.session_state.df = namespace["df"]
+                st.success("Command executed.")
+                st.dataframe(st.session_state.df.head())
+            except Exception as e:
+                st.error(e)
